@@ -84,4 +84,25 @@ table(pred, Species)
 # Matriz de confusion
 
 
+#Seleccion de caracteristicas
+install.packages('RWeka')
+require(RWeka)
+data(iris)
+ranking<-InfoGainAttributeEval(Species ~ . , data = iris) 
+print(ranking)
+
+#Analizar ranking de caracteristicas
+
+
+
+
+
+
+
+
+
+
+
+
+
 
