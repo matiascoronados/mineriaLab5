@@ -204,12 +204,12 @@ FP <- conf.matrix[3]
 VN <- conf.matrix[4]
 FN <- conf.matrix[2]
 
-precicion = VP / (VP + FP)
+precision = VP / (VP + FP)
 recall = VP / (VP + FN)
 calculoF1 <- 2*precicion*recall/(precicion + recall)
 
 conf.matrix
-precicion
+precision
 recall
 calculoF1
 
