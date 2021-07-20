@@ -2,6 +2,7 @@
 #install.packages('bnlearn')
 require(e1071)
 require(RWeka)
+require(ggplot2)
 ####################################################################################
 ####################################################################################
 ####################################################################################
@@ -63,9 +64,7 @@ class <- df.final['class']
 
 
 
-
 #Seleccion de caracteristicas
-
 ranking<-InfoGainAttributeEval(class ~ . , data = datos.05) 
 print(ranking)
 #    nma.a       nex.a  
@@ -96,7 +95,6 @@ ranking<-InfoGainAttributeEval(class ~ . , data = df.final)
 print(ranking)
 
 #Analizar ranking de caracteristicas
-
 #########################################################
 #########################################################
 
@@ -139,6 +137,7 @@ test <- datos.final[-train_ind, ]
 #Se define la formula con las clases
 formula=class ~ .
 #Se pasan los parametros, y se instancia el modelo
+set.seed(100)
 model <- svm(formula = class ~ ., data = train)
 print(model)
 summary(model)
@@ -184,6 +183,10 @@ attr(pred, "decision.values")[1:4,]
 set.seed(100)
 obj <- tune(svm, class~., data = datos.final, kernel = "linear",ranges = list(cost = 2^(-4:4)),tunecontrol = tune.control(sampling = "cross", cross = 2 ))
 summary(obj)
+
+obj$best.model
+
+summary(obj$best.model)
 #El summary entrega el mejor parametro
 #Mejor rendimiento
 # Dispersion -> desviasion estandar asociados a los modelos de entrenamiento.
@@ -193,7 +196,9 @@ summary(obj)
 plot(obj)
 summary(obj$best.model)
 model <- obj$best.model
+
 plot(cmdscale(dist(datos.final[,-5])), col = as.integer(datos.final[,5]), pch = c("o","+")[1:150 %in% model$index + 1])
+
 
 #DESEMPEO DEL MEJOR MODELO
 pred <- predict(obj$best.model, datos.final[,-5])
@@ -206,7 +211,7 @@ FN <- conf.matrix[2]
 
 precision = VP / (VP + FP)
 recall = VP / (VP + FN)
-calculoF1 <- 2*precicion*recall/(precicion + recall)
+calculoF1 <- 2*precision*recall/(precision + recall)
 
 conf.matrix
 precision
@@ -221,28 +226,97 @@ calculoF1
 
 #UTILIZACION DE TUNE CON KERNEL RADIAL
 # Aqui se tiene que incorporar los hiperparametros de gamma y costo
-obj <- tune(svm, class~., data = datos.final, kernel = "radial", ranges = list(gamma = 2^(-2:4), cost = 2^(-1:4), tunecontrol = tune.control(sampling = "cross", cross = 2 )))
+set.seed(100)
+obj <- tune(svm, class~., data = datos.final, kernel = "radial", ranges = list(gamma = 2^(-2:3), cost = 2^(-3:1), tunecontrol = tune.control(sampling = "cross", cross = 2 )))
 summary(obj)
 
 plot(obj)
 summary(obj$best.model)
 model <- obj$best.model
+
 plot(cmdscale(dist(datos.final[,-5])), col = as.integer(datos.final[,5]), pch = c("o","+")[1:150 %in% model$index + 1])
 
 
+set.seed(423)
+obj1 <- tune(svm, class~., data = datos.final, kernel = "radial", ranges = list(gamma = 2^(-5:5), cost = 2^(2:7) , tunecontrol = tune.control(sampling = "cross", cross = 2)))
+summary(obj1)
+
+set.seed(423)
+obj2 <- tune(svm, class~., data = datos.final, kernel = "radial", ranges = list(gamma = 2^(-7:2), cost = 2^(5:8) , tunecontrol = tune.control(sampling = "cross", cross = 2)))
+summary(obj2)
+
+set.seed(423)
+obj3 <- tune(svm, class~., data = datos.final, kernel = "radial", ranges = list(gamma = 2^(-7:2), cost = 2^(-3:2) , tunecontrol = tune.control(sampling = "cross", cross = 2)))
+summary(obj3)
+
+set.seed(423)
+obj4 <- tune(svm, class~., data = datos.final, kernel = "radial", ranges = list(gamma = 2^(-5:2), cost = 2^(1:5) , tunecontrol = tune.control(sampling = "cross", cross = 2)))
+summary(obj4)
+
+
+
+
+ggplot(data = obj1$performances, aes(x = cost, y = error, color = as.factor(gamma)))+
+  geom_line() +
+  geom_point() +
+  labs(title = "Error de clasificación vs hiperparámetros C y gamma", color = "gamma") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+summary(obj1)
+
+
+ggplot(data = obj2$performances, aes(x = cost, y = error, color = as.factor(gamma)))+
+  geom_line() +
+  geom_point() +
+  labs(title = "Error de clasificación vs hiperparámetros C y gamma", color = "gamma") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+summary(obj2)
+
+ggplot(data = obj3$performances, aes(x = cost, y = error, color = as.factor(gamma)))+
+  geom_line() +
+  geom_point() +
+  labs(title = "Error de clasificación vs hiperparámetros C y gamma", color = "gamma") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+summary(obj3)
+
+ggplot(data = obj4$performances, aes(x = cost, y = error, color = as.factor(gamma)))+
+  geom_line() +
+  geom_point() +
+  labs(title = "Error de clasificación vs hiperparámetros C y gamma", color = "gamma") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+summary(obj4)
+
+
+model <- obj3$best.model
+summary(obj3$best.model)
+model <- obj3$best.model
+plot(cmdscale(dist(datos.final[,-5])), col = as.integer(datos.final[,5]), pch = c("o","+")[1:150 %in% model$index + 1])
+
+#DESEMPEO DEL MEJOR MODELO
+pred <- predict(model, datos.final[,-5])
+conf.matrix <- table(pred, datos.final[,5])
+
+VP <- conf.matrix[1]
+FP <- conf.matrix[3]
+VN <- conf.matrix[4]
+FN <- conf.matrix[2]
+
+precision = VP / (VP + FP)
+recall = VP / (VP + FN)
+calculoF1 <- 2*precision*recall/(precision + recall)
+
+conf.matrix
+precision
+recall
+calculoF1
 
 
 
 
 
-
-
-
-
-#UTILIZACION DE TUNE CON KERNEL RADIAL (EXTENDIENDO LA BUSQUEDA DE LOS HIPERPARAMETROS)
-obj <- tune(svm, Species~., data = iris, kernel = "radial", ranges = list(gamma = 2^(-7:12), cost = 2^(-7:14) , tunecontrol = tune.control(sampling = "cross", cross = 2)))
-pred <- predict(obj$best.model, x)
-table(pred, Species)
 
 #Gamma nos indica el grado de linealidad, o de comportamiento lineal
 # Mas bajo: Mas lineal
